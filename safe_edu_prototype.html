@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Safe Edu — Prototype</title>
+<style>
+  :root {
+    --ink: #1d2433; --muted: #5b6475; --line: #e3e6ec; --bg: #f6f7f9; --card: #fff;
+    --brand: #2f5d62; --brand-soft: #e6f0ef; --accent: #b4472f;
+    --ok: #2e7d4f; --ok-soft: #e5f3ea; --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         color: var(--ink); background: var(--bg); line-height: 1.5; }
+
+  /* Header */
+  header { background: var(--card); border-bottom: 1px solid var(--line); padding: 14px 24px;
+           display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .logo { font-weight: 700; font-size: 1.15rem; display: flex; align-items: center; gap: 10px; }
+  .logo-mark { width: 32px; height: 32px; border-radius: 8px; background: var(--brand); color: #fff;
+               display: grid; place-items: center; font-size: .85rem; }
+  .proto-tag { font-size: .72rem; font-weight: 600; color: var(--accent); border: 1px solid var(--accent);
+               border-radius: 999px; padding: 2px 8px; }
+  .switch { display: flex; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 4px; }
+  .switch button { border: 0; background: transparent; padding: 8px 18px; border-radius: 999px; font: inherit;
+                   font-weight: 600; color: var(--muted); cursor: pointer; }
+  .switch button[aria-selected="true"] { background: var(--brand); color: #fff; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 3px solid #7fb3b8; outline-offset: 2px; }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  .view[hidden] { display: none; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .grid { display: grid; grid-template-columns: 1.25fr 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+          padding: 20px; margin-bottom: 20px; }
+  .card h2 { font-size: 1rem; margin: 0 0 12px; }
+  .hint-text { color: var(--muted); font-size: .88rem; margin: -6px 0 12px; }
+
+  /* Form bits */
+  .field { display: block; font-weight: 600; font-size: .9rem; margin: 0 0 6px; }
+  select, input[type=text] { width: 100%; font: inherit; padding: 10px 12px; border: 1px solid var(--line);
+                             border-radius: 8px; background: #fff; color: var(--ink); }
+  .row { margin-bottom: 14px; }
+  .material { display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--line);
+              border-radius: 10px; padding: 12px; background: var(--bg); }
+  .doc-icon { flex: none; width: 36px; height: 44px; border-radius: 6px; background: var(--brand-soft);
+              color: var(--brand); display: grid; place-items: center; font-size: .7rem; font-weight: 700; }
+  .material strong { display: block; }
+  .material small { color: var(--muted); }
+  details { margin-top: 10px; }
+  details summary { cursor: pointer; color: var(--brand); font-weight: 600; font-size: .9rem; }
+  .excerpt p { margin: 8px 0; font-size: .92rem; }
+  .excerpt ol { margin: 8px 0; padding-left: 20px; font-size: .92rem; }
+  .file-note { font-size: .85rem; color: var(--muted); margin-top: 8px; }
+
+  .modes { display: grid; gap: 10px; }
+  .mode { display: flex; gap: 12px; border: 1.5px solid var(--line); border-radius: 10px; padding: 12px; cursor: pointer; }
+  .mode:has(input:checked) { border-color: var(--brand); background: var(--brand-soft); }
+  .mode input { margin-top: 5px; accent-color: var(--brand); }
+  .mode strong { display: block; }
+  .mode span { color: var(--muted); font-size: .88rem; }
+  .check { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; font-size: .95rem; }
+  .check input { margin-top: 5px; accent-color: var(--brand); }
+
+  .btn { border: 0; border-radius: 8px; padding: 10px 18px; font: inherit; font-weight: 600; cursor: pointer; }
+  .btn-primary { background: var(--brand); color: #fff; }
+  .btn-ghost { background: transparent; color: var(--brand); border: 1.5px solid var(--brand); }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+           background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 10px; opacity: 0;
+           transition: all .25s; pointer-events: none; font-size: .92rem; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Student view */
+  .banner { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; background: var(--brand-soft);
+            border: 1px solid #cfe1df; border-radius: var(--radius); padding: 14px 18px; margin-bottom: 20px; }
+  .pill { background: var(--brand); color: #fff; border-radius: 999px; padding: 3px 12px; font-size: .82rem; font-weight: 600; }
+  .banner p { margin: 0; flex: 1 1 260px; font-size: .92rem; }
+
+  .chat { display: flex; flex-direction: column; height: 560px; padding: 0; overflow: hidden; }
+  .chat-head { padding: 14px 18px; border-bottom: 1px solid var(--line); font-weight: 600; }
+  .messages { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+  .msg { max-width: 82%; padding: 10px 14px; border-radius: 14px; font-size: .95rem; white-space: pre-wrap; }
+  .msg.bot { background: var(--bg); border: 1px solid var(--line); align-self: flex-start; border-bottom-left-radius: 4px; }
+  .msg.me { background: var(--brand); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+  .msg .who { display: block; font-size: .72rem; font-weight: 700; opacity: .7; margin-bottom: 2px; }
+  .typing { color: var(--muted); font-size: .85rem; font-style: italic; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 18px 12px; }
+  .chip { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 6px 12px;
+          font: inherit; font-size: .85rem; cursor: pointer; color: var(--ink); }
+  .chip:hover { border-color: var(--brand); }
+  .composer { display: flex; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line); }
+  .composer input { flex: 1; }
+
+  .side h2 { font-size: .95rem; }
+  .side ul { margin: 0; padding-left: 18px; font-size: .9rem; }
+  .side li { margin: 4px 0; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; background: var(--ok-soft); color: var(--ok);
+           border-radius: 999px; padding: 4px 10px; font-size: .82rem; font-weight: 600; margin: 4px 6px 4px 0; }
+  .example { font-size: .78rem; color: var(--muted); font-style: italic; }
+  /* Student layout with left menu */
+  main.wide { max-width: 1280px; }
+  .student-layout { display: grid; grid-template-columns: 230px 1fr; gap: 24px; align-items: start; }
+  @media (max-width: 860px) { .student-layout { grid-template-columns: 1fr; } }
+  .sidebar { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+             padding: 18px 12px; position: sticky; top: 16px; }
+  .welcome { padding: 0 8px 14px; border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+  .welcome small { display: block; color: var(--muted); font-size: .8rem; }
+  .welcome strong { font-size: 1.05rem; }
+  .nav-label { font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+               color: var(--muted); padding: 8px 8px 4px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: transparent;
+              font: inherit; color: var(--ink); text-align: left; padding: 9px 10px; border-radius: 8px; cursor: pointer; }
+  .nav-item:hover { background: var(--bg); }
+  .nav-item[aria-current="page"] { background: var(--brand-soft); color: var(--brand); font-weight: 600; }
+  .nav-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+  .nav-sep { border-top: 1px solid var(--line); margin: 12px 0 8px; }
+  .page[hidden] { display: none; }
+  .class-head { margin-bottom: 18px; }
+  .class-head p { margin: 2px 0 0; color: var(--muted); }
+  .mat-list { display: grid; gap: 12px; }
+  .mat-card { display: flex; gap: 14px; align-items: flex-start; background: var(--card);
+              border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+  .mat-card strong { display: block; }
+  .mat-card small { color: var(--muted); }
+  .mat-card p { margin: 6px 0 0; font-size: .9rem; }
+
+  /* Teacher class page: subtabs, tables, material labels */
+  .subtabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+  .subtabs button { border: 0; background: transparent; font: inherit; font-weight: 600; color: var(--muted);
+                    padding: 10px 14px; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1px; }
+  .subtabs button[aria-selected="true"] { color: var(--brand); border-bottom-color: var(--brand); }
+  .sub-panel[hidden] { display: none; }
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); }
+  th { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  td.num, th.num { text-align: right; }
+  .status { font-size: .8rem; font-weight: 600; border-radius: 999px; padding: 2px 10px; }
+  .status.ok { background: var(--ok-soft); color: var(--ok); }
+  .status.pending { background: #fbeee6; color: var(--accent); }
+  .upload-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+  .mat-form { border: 1.5px solid var(--brand); background: #fbfdfd; border-radius: 10px; padding: 18px; margin-bottom: 16px; }
+  .mat-form[hidden] { display: none; }
+  .mat-form h3 { margin: 0 0 12px; font-size: 1rem; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+  @media (max-width: 700px) { .form-grid { grid-template-columns: 1fr; } }
+  textarea { width: 100%; font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; resize: vertical; }
+  fieldset { border: 0; padding: 0; margin: 0 0 14px; min-width: 0; }
+  label.inline { display: inline-flex; gap: 6px; align-items: center; margin-right: 16px; font-size: .95rem; }
+  label.inline input { accent-color: var(--brand); }
+  .hint-inline { display: block; color: var(--muted); font-size: .84rem; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .tag { font-size: .76rem; font-weight: 600; border-radius: 999px; padding: 2px 10px; background: var(--bg); border: 1px solid var(--line); }
+  .tag.bot-on { background: var(--brand-soft); color: var(--brand); border-color: #cfe1df; }
+  .tag.bot-off { background: #fbeee6; color: var(--accent); border-color: #f1d3c6; }
+  .mat-card .edit-btn { margin-left: auto; padding: 6px 12px; font-size: .85rem; }
+  .tag-Classwork { color: #2f5d62; } .tag-Quiz { color: #5a4fa3; } .tag-Project { color: #8a5a00; }
+  .tag.due { background: #fff; }
+
+  /* Units (teacher) */
+  .units-bar { border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 16px; background: var(--bg); }
+  .units-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin-bottom: 8px; }
+  .unit-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .unit-chip { background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; font-size: .85rem; }
+  .unit-chip small { color: var(--muted); margin-left: 4px; }
+  .unit-add { display: flex; gap: 8px; flex-wrap: wrap; }
+  .unit-add input { flex: 1 1 240px; width: auto; padding: 7px 10px; }
+  .group-head { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+                color: var(--muted); margin: 10px 0 0; display: flex; gap: 8px; align-items: baseline; }
+  .group-head small { font-weight: 600; text-transform: none; letter-spacing: 0; }
+
+  /* Student organizing toolbar */
+  .mat-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .counts { font-size: .86rem; color: var(--muted); }
+  .counts b { color: var(--ink); }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; padding: 12px;
+             background: var(--bg); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 14px; }
+  .seg { display: inline-flex; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+  .seg button { border: 0; background: transparent; font: inherit; font-size: .85rem; font-weight: 600; color: var(--muted);
+                padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--brand); color: #fff; }
+  .tool { display: inline-flex; align-items: center; gap: 6px; font-size: .85rem; color: var(--muted); font-weight: 600; }
+  .tool select { width: auto; padding: 5px 8px; font-size: .86rem; }
+  .status.overdue { background: #fde3dc; color: #a3311a; }
+  .empty { color: var(--muted); font-size: .92rem; padding: 12px 4px; }
+  .src-link { font-size: .82rem; color: var(--brand); }
+
+  /* Chatbot settings: collapsible sections */
+  .settings-stack { max-width: 860px; }
+  .acc { padding: 0; }
+  .acc summary { list-style: none; cursor: pointer; padding: 18px 20px; display: flex; flex-wrap: wrap;
+                 align-items: baseline; gap: 4px 14px; position: relative; padding-right: 48px; }
+  .acc summary::-webkit-details-marker { display: none; }
+  .acc summary::after { content: ""; position: absolute; right: 22px; top: 24px; width: 9px; height: 9px;
+                        border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+                        transform: rotate(45deg); }
+  .acc[open] summary::after { transform: rotate(-135deg); top: 28px; }
+  .acc summary:hover .acc-title { color: var(--brand); }
+  .acc-title { font-weight: 700; font-size: 1rem; }
+  .acc-sum { color: var(--muted); font-size: .88rem; }
+  .acc-body { padding: 0 20px 20px; border-top: 1px solid var(--line); padding-top: 16px; }
+  .acc .mode input[type=checkbox] { margin-top: 5px; accent-color: var(--brand); }
+  .who-sees { font-size: .72rem; font-weight: 600; border-radius: 999px; padding: 2px 8px; margin-left: 6px;
+              background: var(--bg); color: var(--muted); border: 1px solid var(--line); vertical-align: middle; }
+  .who-sees.students { background: var(--brand-soft); color: var(--brand); border-color: #cfe1df; }
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  /* Chatbot settings: material list */
+  .bot-mat { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--line);
+             border-radius: 8px; margin-bottom: 8px; cursor: pointer; }
+  .bot-mat input { margin-top: 5px; accent-color: var(--brand); }
+  .bot-mat strong { display: block; font-size: .93rem; }
+  .bot-mat small { color: var(--muted); }
+
+  /* Student turn-in */
+  .s-mat-body { flex: 1; min-width: 0; }
+  .turnin-area { margin-top: 12px; }
+  .turnin-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .btn.small { padding: 6px 12px; font-size: .86rem; }
+  .turnin-panel, .turned-in { border-top: 1px dashed var(--line); padding-top: 12px; }
+  .file-list { list-style: none; padding: 0; margin: 8px 0; font-size: .9rem; }
+  .file-list li { padding: 2px 0; }
+  .s-note { font-size: .88rem; color: var(--muted); margin: 4px 0 8px; }
+  .date-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .date-row input[type=date] { width: auto; font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; }
+  .mat-card > div:nth-child(2) { flex: 1; }
+  .tag-Reading { color: #2e7d4f; }
+  .tag-Homework { color: #b4472f; } .tag-Other { color: #5b6475; }
+
+  /* Class picker + saved chats */
+  .chat-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .picker { display: flex; align-items: center; gap: 8px; font-weight: 400; font-size: .88rem; color: var(--muted); }
+  .picker select { width: auto; padding: 6px 10px; font-weight: 600; color: var(--ink); }
+  .picker-note { width: 100%; font-size: .78rem; color: var(--muted); font-weight: 400; margin-top: -4px; }
+  .saved-group { margin-bottom: 10px; }
+  .saved-group h3 { font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted);
+                    margin: 8px 0 4px; display: flex; align-items: center; gap: 6px; }
+  .saved-item { display: block; width: 100%; text-align: left; border: 0; background: transparent; font: inherit;
+                font-size: .9rem; padding: 6px 8px; border-radius: 6px; cursor: pointer; color: var(--ink); }
+  .saved-item:hover { background: var(--bg); }
+  .saved-item small { color: var(--muted); margin-left: 4px; }
+  .class-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark" aria-hidden="true">SE</div>
+    Safe Edu <span class="proto-tag">Prototype</span>
+  </div>
+  <div class="switch" role="tablist" aria-label="Choose a view">
+    <button role="tab" id="tab-teacher" aria-selected="true" aria-controls="view-teacher">Teacher</button>
+    <button role="tab" id="tab-student" aria-selected="false" aria-controls="view-student">Student</button>
+  </div>
+</header>
+
+<main>
+  <!-- ================= TEACHER VIEW ================= -->
+  <section class="view" id="view-teacher" role="tabpanel" aria-labelledby="tab-teacher">
+   <div class="student-layout">
+    <nav class="sidebar" aria-label="Teacher menu">
+      <div class="welcome"><small id="t-subject"></small><strong id="t-name"></strong></div>
+      <div class="nav-label">Class periods</div>
+      <div id="t-nav-periods"></div>
+      <div class="nav-sep"></div>
+      <button class="nav-item" id="t-nav-settings" type="button">
+        <span class="nav-dot" style="background:var(--brand)" aria-hidden="true"></span>Chatbot settings
+      </button>
+    </nav>
+
+    <div>
+    <!-- Teacher class page -->
+    <div class="page" id="t-page-class" hidden>
+      <div class="class-head">
+        <div>
+          <h1 id="tc-title"></h1>
+          <p id="tc-sub"></p>
+        </div>
+      </div>
+      <div class="subtabs" role="tablist" aria-label="Class sections">
+        <button role="tab" type="button" data-sub="roster">Student roster</button>
+        <button role="tab" type="button" data-sub="grades">Grades</button>
+        <button role="tab" type="button" data-sub="materials">Materials</button>
+      </div>
+
+      <div class="card sub-panel" id="sub-roster"></div>
+      <div class="card sub-panel" id="sub-grades" hidden></div>
+      <div class="card sub-panel" id="sub-materials" hidden>
+        <div class="units-bar">
+          <div class="units-head">
+            <span class="field" style="margin:0">Units</span>
+            <span class="hint-inline">Shared across all your periods</span>
+          </div>
+          <div class="unit-chips" id="unit-chips"></div>
+          <form class="unit-add" id="unit-add">
+            <label for="unit-name" class="sr-only">New unit name</label>
+            <input type="text" id="unit-name" placeholder="e.g., Unit 4: Inheritance">
+            <button class="btn btn-ghost small" type="submit">+ Add unit</button>
+          </form>
+        </div>
+
+        <div class="upload-row">
+          <button class="btn btn-primary" id="t-upload-btn" type="button">Upload material</button>
+        </div>
+
+        <div class="mat-form" id="mat-form" hidden>
+          <h3 id="mf-heading">Upload material</h3>
+          <div class="form-grid">
+            <div class="row" id="mf-file-row">
+              <label class="field" for="mf-file">File</label>
+              <input type="file" id="mf-file">
+            </div>
+            <div class="row">
+              <label class="field" for="mf-title">Title</label>
+              <input type="text" id="mf-title" placeholder="e.g., Photosynthesis Reading">
+            </div>
+            <div class="row">
+              <label class="field" for="mf-unit">Unit</label>
+              <select id="mf-unit"></select>
+            </div>
+            <div class="row">
+              <label class="field" for="mf-type">Type</label>
+              <select id="mf-type"></select>
+            </div>
+            <fieldset class="row">
+              <legend class="field">Graded?</legend>
+              <label class="inline"><input type="radio" name="mf-graded" value="yes"> Graded</label>
+              <label class="inline"><input type="radio" name="mf-graded" value="no" checked> Not graded</label>
+            </fieldset>
+          </div>
+          <fieldset class="row">
+            <legend class="field">Due date</legend>
+            <div class="date-row">
+              <input type="date" id="mf-due" aria-label="Due date">
+              <label class="inline"><input type="checkbox" id="mf-nodue"> No due date</label>
+            </div>
+          </fieldset>
+          <div class="row">
+            <label class="field" for="mf-desc">Description / instructions for students</label>
+            <textarea id="mf-desc" rows="3" placeholder="What should students do with this, and by when?"></textarea>
+          </div>
+          <label class="check"><input type="checkbox" id="mf-chatbot" checked>
+            <span>The study assistant can use this material
+              <span class="hint-inline">Turn this off for answer keys, tests, or anything students should do without help.</span></span>
+          </label>
+          <fieldset class="row" id="mf-periods-row">
+            <legend class="field">Post to</legend>
+            <div id="mf-periods"></div>
+          </fieldset>
+          <div class="actions">
+            <button class="btn btn-primary" id="mf-save" type="button">Save</button>
+            <button class="btn btn-ghost" id="mf-cancel" type="button">Cancel</button>
+          </div>
+        </div>
+
+        <div class="mat-list" id="tc-materials"></div>
+      </div>
+    </div>
+
+    <!-- Chatbot settings page -->
+    <div class="page" id="t-page-settings">
+    <h1>Chatbot settings</h1>
+    <p class="sub">Choose the materials the assistant can use and how it should respond to your students.</p>
+
+    <div class="settings-stack">
+        <details class="card acc">
+          <summary><span class="acc-title">1. Class and materials</span><span class="acc-sum" id="sum-1"></span></summary>
+          <div class="acc-body">
+          <div class="row">
+            <label class="field" for="class-select">Class</label>
+            <select id="class-select"></select>
+          </div>
+          <label class="field">Materials the study assistant can use</label>
+          <p class="hint-text" style="margin-top:0">Uncheck anything students should do without help. To add materials, open a class period's Materials tab.</p>
+          <div id="bot-materials"></div>
+          <details>
+            <summary>Preview "<span id="mat-title"></span>"</summary>
+            <div class="excerpt" id="mat-excerpt"></div>
+          </details>
+          </div>
+        </details>
+
+        <details class="card acc">
+          <summary><span class="acc-title">2. How should the assistant respond?</span><span class="acc-sum" id="sum-2"></span></summary>
+          <div class="acc-body">
+          <label class="field">Response styles</label>
+          <p class="hint-text" style="margin-top:0">Turn on as many as fit your class. The assistant picks the right one based on what the student asks.</p>
+          <div class="modes" id="mode-list"></div>
+
+          <div class="row" style="margin-top:18px">
+            <label class="field" for="bot-instructions">Instructions for the assistant <span class="who-sees">Only you see this</span></label>
+            <p class="hint-text" style="margin-top:0">Describe how you want it to work in your subject: what to emphasize, what to avoid, how to talk to students.</p>
+            <textarea id="bot-instructions" rows="5"></textarea>
+          </div>
+
+          <div class="row">
+            <label class="field" for="bot-description">Official description for students <span class="who-sees students">Students see this</span></label>
+            <p class="hint-text" style="margin-top:0">Shown at the top of the study assistant so students know what it will and won't do.</p>
+            <textarea id="bot-description" rows="4"></textarea>
+          </div>
+          </div>
+        </details>
+
+        <details class="card acc">
+          <summary><span class="acc-title">3. Guardrails</span><span class="acc-sum" id="sum-3"></span></summary>
+          <div class="acc-body">
+          <div class="row">
+            <label class="field" for="level-select">Reading level of responses</label>
+            <select id="level-select">
+              <option>Grade 9</option>
+              <option>Grade 10</option>
+              <option>Grade 11–12</option>
+              <option>Simplified (support for multilingual learners)</option>
+            </select>
+          </div>
+          <label class="check"><input type="checkbox" id="g-noanswers" checked> Never give final answers to assigned questions</label>
+          <label class="check"><input type="checkbox" id="g-materials" checked> Only use approved class materials</label>
+          <label class="check"><input type="checkbox" id="g-offtopic" checked> Redirect off-topic questions</label>
+          <label class="check"><input type="checkbox" id="g-flag"> Flag chats that mention a student's safety for counselor review</label>
+          </div>
+        </details>
+
+        <div class="card">
+          <h2>4. Save</h2>
+          <p class="hint-text">Changes apply to the student view right away.</p>
+          <div class="actions">
+            <button class="btn btn-primary" id="save-btn">Save settings</button>
+            <button class="btn btn-ghost" id="preview-btn">Preview as student</button>
+          </div>
+        </div>
+    </div>
+    </div><!-- /t-page-settings -->
+    </div>
+   </div><!-- /teacher layout -->
+  </section>
+
+  <!-- ================= STUDENT VIEW ================= -->
+  <section class="view" id="view-student" role="tabpanel" aria-labelledby="tab-student" hidden>
+   <div class="student-layout">
+    <nav class="sidebar" aria-label="Student menu">
+      <div class="welcome"><small>Welcome,</small><strong id="s-name"></strong></div>
+      <div class="nav-label">Classes</div>
+      <div id="nav-classes"></div>
+      <div class="nav-sep"></div>
+      <button class="nav-item" id="nav-assistant" type="button">
+        <span class="nav-dot" style="background:var(--brand)" aria-hidden="true"></span>Study assistant
+      </button>
+    </nav>
+
+    <div>
+    <!-- Class page -->
+    <div class="page" id="page-class" hidden>
+      <div class="class-head">
+        <div>
+          <h1 id="c-title"></h1>
+          <p id="c-teacher"></p>
+        </div>
+        <button class="btn btn-primary" id="c-ask" type="button"></button>
+      </div>
+      <div class="card" style="padding-bottom:8px">
+        <div class="mat-head">
+          <h2 style="margin:0">Classwork &amp; materials</h2>
+          <span class="counts" id="c-counts"></span>
+        </div>
+
+        <div class="toolbar" aria-label="Organize classwork">
+          <div class="seg" role="group" aria-label="Show">
+            <button type="button" data-show="all">All</button>
+            <button type="button" data-show="todo">To do</button>
+            <button type="button" data-show="overdue">Overdue</button>
+            <button type="button" data-show="done">Completed</button>
+          </div>
+          <label class="tool">Unit <select id="f-unit"></select></label>
+          <label class="tool">Type <select id="f-type"></select></label>
+          <label class="tool">Sort by
+            <select id="f-sort">
+              <option value="due">Due date (soonest)</option>
+              <option value="due-desc">Due date (latest)</option>
+              <option value="added">Recently added</option>
+              <option value="title">Title (A–Z)</option>
+            </select>
+          </label>
+          <label class="tool">Group by
+            <select id="f-group">
+              <option value="unit">Unit</option>
+              <option value="type">Type</option>
+              <option value="status">Status</option>
+              <option value="none">No grouping</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="mat-list" id="c-materials" style="margin-bottom:12px"></div>
+      </div>
+    </div>
+
+    <!-- Study assistant page -->
+    <div class="page" id="page-assistant">
+    <div class="banner">
+      <span class="pills" id="s-mode-pill"></span>
+      <p><strong id="s-class"></strong> · <span id="s-material"></span><br><span id="s-mode-desc"></span></p>
+    </div>
+
+    <div class="grid">
+      <div class="card chat">
+        <div class="chat-head">
+          Study assistant
+          <label class="picker">Asking about
+            <select id="class-picker"></select>
+          </label>
+          <div class="picker-note">Each conversation stays with one class. Switching classes starts a new conversation.</div>
+        </div>
+        <div class="messages" id="messages" aria-live="polite"></div>
+        <div class="chips" id="chips" aria-label="Example questions"></div>
+        <form class="composer" id="composer">
+          <label for="chat-input" class="sr-only">Message</label>
+          <input type="text" id="chat-input" placeholder="Ask about today's reading…" autocomplete="off">
+          <button class="btn btn-primary" type="submit">Send</button>
+        </form>
+      </div>
+
+      <div class="side">
+        <div class="card">
+          <h2>Saved chats</h2>
+          <div id="saved-chats"></div>
+        </div>
+        <div class="card">
+          <h2>About this assistant</h2>
+          <ul>
+            <li>It's an AI, not a person. It can make mistakes, so check with your teacher when you're unsure.</li>
+            <li>It only uses materials your teacher shared. It does not search the internet.</li>
+            <li>It's here to help you think, not to do the work for you.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h2>Your teacher's settings</h2>
+          <ul id="s-guardrails"></ul>
+        </div>
+        <div class="card">
+          <h2>Your privacy</h2>
+          <ul>
+            <li id="s-privacy-teacher"></li>
+            <li>Chats are deleted at the end of the semester.</li>
+            <li>Your chats are never sold or used to train AI.</li>
+          </ul>
+          <p class="example">Example policy for the prototype.</p>
+          <div>
+            <span class="badge">✓ Parent/guardian consent on file</span>
+            <span class="badge">✓ Student agreement given</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div><!-- /page-assistant -->
+    </div>
+   </div><!-- /student-layout -->
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* =========================================================
+   LESSON CONTENT — replace this block with your own lesson.
+   Placeholder reading written for the prototype.
+   ========================================================= */
+const LESSON = {
+  title: "Cells and Their Organelles",
+  source: "Reading + worksheet · placeholder lesson",
+  paragraphs: [
+    "All living things are made of cells. Inside many cells are smaller structures called organelles, and each one has a specific job.",
+    "The nucleus stores the cell's DNA, which carries the instructions for making proteins. Mitochondria release energy from glucose through a process called cellular respiration.",
+    "Ribosomes build proteins. The cell membrane is selectively permeable, which means it controls what enters and leaves the cell."
+  ],
+  questions: [
+    "What does the nucleus store?",
+    "Which structure controls what enters and leaves the cell?",
+    "Which organelle releases energy the cell can use, and how?"
+  ],
+  // Words that count as "on topic" for this lesson
+  keywords: ["cell", "organelle", "nucleus", "mitochondri", "ribosome", "membrane", "dna",
+             "energy", "glucose", "protein", "respiration", "reading", "worksheet", "permeable"]
+};
+
+/* Teacher menu: name, subject and class periods (placeholders — replace with your own) */
+const TEACHER = { name: "Ms. Rivera", subject: "Biology" };
+const MATERIAL_TYPES = ["Classwork", "Homework", "Project", "Quiz", "Reading", "Other"];
+// Types students can turn in work for (with file uploads)
+const SUBMITTABLE_TYPES = ["Classwork", "Homework", "Project"];
+const ASSIGNMENTS = ["Science of Biology notes", "Microscope lab", "Cell structures notes"];
+
+/* Units the teacher has created. Shared across all of the teacher's periods.
+   Unit and lesson titles follow Biology Corner's Intro Biology course:
+   https://www.biologycorner.com/introbio/index.html (descriptions are our own). */
+const BIO_UNITS = ["Unit 1: The Nature of Science", "Unit 2: Cellular Processes", "Unit 3: Immune Response"];
+const SOURCE_URL = "https://www.biologycorner.com/introbio/index.html";
+
+// chatbot: whether the study assistant can use it · due/added: "YYYY-MM-DD" (due can be null)
+// submission: work the student already turned in · done: student marked a non-submittable item done
+const baseMaterials = () => [
+  // Unit 1
+  { title: "Lab Safety Contract", unit: BIO_UNITS[0], type: "Homework", graded: false, chatbot: true,
+    added: "2026-11-02", due: "2026-11-06", source: SOURCE_URL,
+    desc: "Read the lab safety rules, sign with a parent or guardian, and upload a photo of the signed page.",
+    submission: { files: ["safety-contract-signed.jpg"], note: "", date: "Nov 5" } },
+  { title: "The Science of Biology | Guided Notes", unit: BIO_UNITS[0], type: "Classwork", graded: true, chatbot: true,
+    added: "2026-11-03", due: "2026-11-10", source: SOURCE_URL,
+    desc: "Fill in the guided notes during the lesson and upload them when you're done.",
+    submission: { files: ["science-of-bio-notes.pdf"], note: "", date: "Nov 10" } },
+  { title: "Characteristics of Life Crossword Puzzle", unit: BIO_UNITS[0], type: "Homework", graded: false, chatbot: true,
+    added: "2026-11-09", due: "2026-11-16", source: SOURCE_URL,
+    desc: "Optional review. Complete the crossword and upload a photo." },
+  { title: "Microscope Introductory Lab", unit: BIO_UNITS[0], type: "Classwork", graded: true, chatbot: true,
+    added: "2026-11-12", due: "2026-11-18", source: SOURCE_URL,
+    desc: "Complete the lab in pairs. Each student uploads their own lab sheet with drawings.",
+    submission: { files: ["microscope-lab.pdf"], note: "My partner was Grace.", date: "Nov 18" } },
+  // Unit 2
+  { title: "Cell Theory and Cell Structures | Guided Notes", unit: BIO_UNITS[1], type: "Classwork", graded: true, chatbot: true,
+    added: "2026-11-19", due: "2026-11-24", source: SOURCE_URL,
+    desc: "Fill in the notes during class. Upload them by the end of the day." },
+  { title: LESSON.title, unit: BIO_UNITS[1], type: "Reading", graded: false, chatbot: true,
+    added: "2026-11-19", due: "2026-11-25",
+    desc: "Read before Wednesday's class. Use the study assistant if you get stuck." },
+  { title: "Cell City | Cell Labeling", unit: BIO_UNITS[1], type: "Homework", graded: true, chatbot: true,
+    added: "2026-11-20", due: "2026-11-30", source: SOURCE_URL,
+    desc: "Label each cell part and describe its job using the city comparison. Upload a photo or scan." },
+  { title: "Reinforcement: Cell Structures", unit: BIO_UNITS[1], type: "Homework", graded: true, chatbot: true,
+    added: "2026-11-20", due: "2026-12-02", source: SOURCE_URL,
+    desc: "Practice worksheet. Try it on your own first, then ask the study assistant for hints." },
+  { title: "Cells Quiz", unit: BIO_UNITS[1], type: "Quiz", graded: true, chatbot: false,
+    added: "2026-11-20", due: "2026-12-04",
+    desc: "In class. Closed notes." },
+  { title: "Investigation: The Effect of Salt on a Carrot", unit: BIO_UNITS[1], type: "Project", graded: true, chatbot: true,
+    added: "2026-11-23", due: "2026-12-11", source: SOURCE_URL,
+    desc: "Run the investigation with your lab group, then write and upload your own lab report." },
+  // Unit 3
+  { title: "Bacteria and Viruses and the Immune System", unit: BIO_UNITS[2], type: "Reading", graded: false, chatbot: true,
+    added: "2026-11-23", due: "2026-12-14", source: SOURCE_URL,
+    desc: "Preview reading for our next unit." }
+];
+
+const fmtDate = (iso, opts) => new Date(iso + "T00:00").toLocaleDateString("en-US", opts);
+const formatDue = (iso) => iso ? "Due " + fmtDate(iso, { weekday: "short", month: "short", day: "numeric" }) : "No due date";
+const formatAdded = (iso) => "Added " + fmtDate(iso, { month: "short", day: "numeric" });
+const todayISO = () => {   // local date, YYYY-MM-DD
+  const d = new Date(), pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+// consent: AI assistant access (parent/guardian consent + student agreement)
+const PERIODS = {
+  p2: { name: "Period 2", course: "Biology", materials: baseMaterials(), students: [
+    { name: "Maya Johnson", consent: true, scores: [92, 88, 95] },
+    { name: "Diego Hernández", consent: true, scores: [78, 85, 80] },
+    { name: "Aisha Rahman", consent: true, scores: [96, 91, 98] },
+    { name: "Liam O'Brien", consent: false, scores: [70, 74, 68] },
+    { name: "Grace Kim", consent: true, scores: [88, 90, 86] },
+    { name: "Jamal Carter", consent: true, scores: [81, 79, 90] }
+  ]},
+  p4: { name: "Period 4", course: "Biology", materials: baseMaterials(), students: [
+    { name: "Sofia Rossi", consent: true, scores: [85, 89, 91] },
+    { name: "Ethan Nguyen", consent: true, scores: [90, 84, 87] },
+    { name: "Amara Okeke", consent: false, scores: [76, 82, 79] },
+    { name: "Noah Patel", consent: true, scores: [93, 95, 90] },
+    { name: "Lily Chen", consent: true, scores: [72, 80, 77] }
+  ]},
+  p5: { name: "Period 5", course: "Biology", materials: baseMaterials(), students: [
+    { name: "Zara Ahmed", consent: true, scores: [97, 94, 99] },
+    { name: "Lucas Silva", consent: true, scores: [89, 92, 88] },
+    { name: "Hannah Lee", consent: true, scores: [91, 87, 93] },
+    { name: "Omar Haddad", consent: false, scores: [84, 80, 86] },
+    { name: "Chloe Martin", consent: true, scores: [95, 96, 92] }
+  ]}
+};
+const periodLabel = (p) => `${p.course} · ${p.name}`;
+
+/* Student menu: name and classes (placeholders — replace with your own) */
+const STUDENT_NAME = "Maya";
+const STUDENT_PERIOD = "p2";   // Maya's Biology period: her Biology page shows what Ms. Rivera posts there
+const CLASSES = {
+  history: {
+    name: "History", teacher: "Mr. Okafor", course: "World History · Period 1", color: "#b4472f",
+    modes: ["hint"], guardrails: ["No final answers to assigned questions", "Only uses your class materials"],
+    description: "I help you analyze sources and readings by asking questions. I won't write your answers, but I'll help you find evidence and build your own argument.",
+    units: ["Unit 3: Industrialization"],
+    materials: [
+      { title: "The Industrial Revolution", unit: "Unit 3: Industrialization", type: "Reading", graded: false, chatbot: true,
+        added: "2026-11-17", due: "2026-11-25", desc: "Read before Wednesday's discussion." },
+      { title: "Primary Source Analysis", unit: "Unit 3: Industrialization", type: "Classwork", graded: true, chatbot: true,
+        added: "2026-11-18", due: "2026-11-24", desc: "Complete questions 1–4 and upload your answers." }
+    ]
+  },
+  biology: {
+    // Biology's settings, units and materials come from the Teacher view
+    name: "Biology", teacher: "Ms. Rivera", course: "Biology · Period 2", color: "#2e7d4f",
+    get units() { return BIO_UNITS; },
+    get materials() { return PERIODS[STUDENT_PERIOD].materials; }
+  },
+  english: {
+    name: "English", teacher: "Ms. Chen", course: "English 9 · Period 3", color: "#5a4fa3",
+    modes: ["feedback"], guardrails: ["Gives feedback, doesn't rewrite your writing", "Only uses your class materials"],
+    description: "Share a paragraph or draft and I'll point out what's working and what to strengthen, using the rubric. I won't rewrite your writing for you.",
+    units: ["Unit 2: Argument Writing"],
+    materials: [
+      { title: "Argumentative Essay", unit: "Unit 2: Argument Writing", type: "Project", graded: true, chatbot: true,
+        added: "2026-11-16", due: "2026-12-07",
+        desc: "Write a 3–4 page argumentative essay. Upload your final draft as a Word doc or PDF." },
+      { title: "Argumentative Essay Rubric", unit: "Unit 2: Argument Writing", type: "Other", graded: false, chatbot: true,
+        added: "2026-11-18", due: null, desc: "Check your draft against this before turning it in." }
+    ]
+  }
+};
+
+/* Saved conversations shown in the assistant (placeholders) */
+const SAVED_CHATS = [
+  { cls: "biology", title: "Cells reading, question 3", date: "Nov 19" },
+  { cls: "biology", title: "Organelle practice quiz", date: "Nov 20" },
+  { cls: "history", title: "Industrial Revolution notes", date: "Nov 17" },
+  { cls: "english", title: "Essay thesis feedback", date: "Nov 18" }
+];
+
+/* Response modes the teacher can choose */
+const MODES = {
+  hint: {
+    label: "Hint-only",
+    teacherText: "Asks guiding questions and points to the reading. Never gives final answers.",
+    studentText: "I'll ask guiding questions and point you to the reading. I won't give you final answers."
+  },
+  feedback: {
+    label: "Feedback",
+    teacherText: "Comments on what the student wrote. Doesn't rewrite it for them.",
+    studentText: "Share your answer or draft and I'll tell you what's working and what to strengthen. I won't rewrite it for you."
+  },
+  practice: {
+    label: "Practice",
+    teacherText: "Quizzes students on the material and explains what they missed.",
+    studentText: "I'll quiz you on the reading and help you see what you missed."
+  }
+};
+
+/* Scripted replies: SCRIPTS[mode][intent] */
+const OFF_TOPIC = `I can only help with the materials your teacher shared for this class: "${LESSON.title}." For other subjects, check with that teacher or your school library.`;
+
+const SCRIPTS = {
+  hint: {
+    answer: `I can't give you the answer, but let's find it together. Look at paragraph 2 of "${LESSON.title}." Which organelle does the reading connect to energy? Once you find it, what does it use to release that energy?`,
+    draft: "Good start getting an idea down. Check one thing: the reading says the nucleus stores the cell's DNA. Does it say anything about the nucleus releasing energy? Reread paragraph 2 and look for the word \"energy.\"",
+    practice: "In Hint-only mode I'll help you work through questions instead of quizzing you. Pick a question from the worksheet and tell me what you think so far.",
+    choice: "Tell me why you picked that one. Which sentence in the reading supports it?",
+    other: "Good question. Which part of the reading do you think talks about that? Tell me the paragraph and what you notice, and I'll help you take the next step.",
+    offtopic: OFF_TOPIC
+  },
+  feedback: {
+    answer: "In Feedback mode I won't write the answer for you. Write your best answer to #3 in your own words and send it. I'll tell you what's strong and what to fix.",
+    draft: "What's working: you named a specific organelle and connected it to a job in the cell.\n\nWhat to fix: check which organelle the reading connects to energy. It isn't the nucleus. Reread paragraph 2, then revise your sentence to say which organelle releases energy and what it uses to do that.",
+    practice: "In Feedback mode I respond to your work. Try answering one worksheet question first, then send it to me.",
+    choice: "Send me a full sentence explaining your answer and I'll give you feedback on it.",
+    other: "Send me what you've written so far and I'll give you feedback based on the reading.",
+    offtopic: OFF_TOPIC
+  },
+  practice: {
+    answer: "Let's turn that into practice. Quick check first: according to the reading, which organelle stores the cell's DNA?\nA) Ribosome\nB) Nucleus\nC) Cell membrane\nReply with A, B, or C.",
+    draft: "Let's practice that idea. True or false: the nucleus releases energy for the cell. Explain your choice using the reading.",
+    practice: "Question 1 of 3: The reading says the cell membrane controls what enters and leaves the cell. Which term describes this?\nA) Permeable\nB) Selectively permeable\nC) Solid\nReply with A, B, or C.",
+    choice: "In the full version, I'd check this against your teacher's answer key and explain it using the reading. Ready for the next question?",
+    other: "Let's test it. In your own words, what does a ribosome do? Check yourself against paragraph 3 afterward.",
+    offtopic: OFF_TOPIC
+  }
+};
+
+/* Example prompts shown as clickable chips */
+const CHIPS = [
+  "What's the answer to #3?",
+  "Check my answer: the nucleus makes energy for the cell.",
+  "Quiz me on this reading",
+  "Can you help with my history essay?"
+];
+
+/* =========================================================
+   APP LOGIC
+   ========================================================= */
+const state = {
+  activeClass: "biology",
+  className: periodLabel(PERIODS.p2),
+  teacherPeriod: "p2",
+  modes: ["hint", "feedback"],   // response styles the Biology teacher has turned on
+  instructions: "Use the vocabulary from our readings (organelle, cellular respiration, selectively permeable). " +
+    "When a student is stuck, point them to the paragraph in the reading before giving a hint. " +
+    "Encourage students to explain ideas in their own words. Keep replies short: 3–4 sentences.",
+  description: "I'm your Biology study assistant. I use only Ms. Rivera's class materials. " +
+    "I'll give you hints and point you to the reading, and I'll give feedback on your answers, " +
+    "but I won't give you final answers to assignments or quizzes.",
+  level: "Grade 9",
+  guardrails: { noanswers: true, materials: true, offtopic: true, flag: false }
+};
+
+const $ = (id) => document.getElementById(id);
+
+function renderTeacher() {
+  $("class-select").innerHTML = Object.entries(PERIODS)
+    .map(([key, p]) => `<option value="${key}">${periodLabel(p)}</option>`).join("");
+  $("class-select").onchange = renderBotMaterials;
+  renderBotMaterials();
+  $("mat-title").textContent = LESSON.title;
+  $("mat-excerpt").innerHTML =
+    LESSON.paragraphs.map((p, i) => `<p><strong>¶${i + 1}</strong> ${p}</p>`).join("") +
+    `<p><strong>Worksheet</strong></p><ol>${LESSON.questions.map(q => `<li>${q}</li>`).join("")}</ol>`;
+  $("mode-list").innerHTML = Object.entries(MODES).map(([key, m]) => `
+    <label class="mode">
+      <input type="checkbox" name="mode" value="${key}" ${state.modes.includes(key) ? "checked" : ""}>
+      <div><strong>${m.label}</strong><span>${m.teacherText}</span></div>
+    </label>`).join("");
+  $("bot-instructions").value = state.instructions;
+  $("bot-description").value = state.description;
+  // Keep the collapsed-section summaries up to date
+  $("view-teacher").querySelector(".settings-stack").addEventListener("input", updateSummaries);
+  $("view-teacher").querySelector(".settings-stack").addEventListener("change", updateSummaries);
+  updateSummaries();
+}
+
+/* One-line summary shown on each collapsed section */
+function updateSummaries() {
+  const p = PERIODS[$("class-select").value];
+  const on = p.materials.filter(m => m.chatbot).length;
+  $("sum-1").textContent = `${periodLabel(p)} · ${on} of ${p.materials.length} materials available`;
+  const modes = [...document.querySelectorAll('input[name="mode"]:checked')].map(i => MODES[i.value].label);
+  $("sum-2").textContent = (modes.length ? modes.join(" + ") : "No response style chosen") +
+    ($("bot-description").value.trim() ? " · Student description written" : " · No student description");
+  const guards = ["g-noanswers", "g-materials", "g-offtopic", "g-flag"].filter(id => $(id).checked).length;
+  $("sum-3").textContent = `${$("level-select").value} · ${guards} of 4 guardrails on`;
+}
+
+/* Chatbot settings: list the selected period's materials with an on/off checkbox each */
+function renderBotMaterials() {
+  const p = PERIODS[$("class-select").value];
+  $("bot-materials").innerHTML = "";
+  p.materials.forEach(m => {
+    const row = document.createElement("label");
+    row.className = "bot-mat";
+    const cb = document.createElement("input");
+    cb.type = "checkbox"; cb.checked = m.chatbot;
+    cb.onchange = () => { m.chatbot = cb.checked; renderBotMaterials(); updateSummaries(); };
+    const text = document.createElement("span");
+    text.innerHTML = `<strong></strong><small>${m.type} · ${m.chatbot ? "Assistant can use" : "Hidden from assistant"}</small>`;
+    text.querySelector("strong").textContent = m.title;
+    row.append(cb, text);
+    $("bot-materials").appendChild(row);
+  });
+}
+
+function readTeacherForm() {
+  state.className = periodLabel(PERIODS[$("class-select").value]);
+  const chosen = [...document.querySelectorAll('input[name="mode"]:checked')].map(i => i.value);
+  if (chosen.length) state.modes = chosen;   // keep the last saved styles if none are checked
+  state.instructions = $("bot-instructions").value.trim();
+  state.description = $("bot-description").value.trim();
+  state.level = $("level-select").value;
+  state.guardrails = {
+    noanswers: $("g-noanswers").checked,
+    materials: $("g-materials").checked,
+    offtopic: $("g-offtopic").checked,
+    flag: $("g-flag").checked
+  };
+}
+
+/* Biology uses the Teacher view's settings; other classes use their placeholder settings */
+const isBio = () => state.activeClass === "biology";
+const activeModes = () => isBio() ? state.modes : CLASSES[state.activeClass].modes;
+// The teacher's official description; falls back to the built-in text for each style
+const activeDescription = () => {
+  const d = isBio() ? state.description : CLASSES[state.activeClass].description;
+  return d || activeModes().map(k => MODES[k].studentText).join(" ");
+};
+// With several styles on, pick the best fit for what the student asked
+const STYLE_PREFERENCE = {
+  answer: ["hint", "feedback", "practice"], draft: ["feedback", "hint", "practice"],
+  practice: ["practice", "hint", "feedback"], choice: ["practice", "hint", "feedback"],
+  other: ["hint", "feedback", "practice"], offtopic: ["hint", "feedback", "practice"]
+};
+const pickMode = (intent) => STYLE_PREFERENCE[intent].find(k => state.modes.includes(k));
+
+function renderStudent() {
+  const c = CLASSES[state.activeClass];
+  $("class-picker").value = state.activeClass;
+  $("s-mode-pill").innerHTML = activeModes().map(k => `<span class="pill">${MODES[k].label}</span>`).join("");
+  $("s-class").textContent = isBio() ? state.className : `${c.name} · ${c.course}`;
+  $("s-material").textContent = isBio() ? LESSON.title : c.materials[0].title;
+  $("s-mode-desc").textContent = activeDescription();
+  $("s-privacy-teacher").textContent =
+    `Only your ${c.name} teacher (${c.teacher}) can read your ${c.name} chats.`;
+
+  let items;
+  if (isBio()) {
+    const g = state.guardrails;
+    items = [`Responses written at a ${state.level} reading level`];
+    if (g.noanswers) items.push("No final answers to assigned questions");
+    if (g.materials) items.push("Only uses your class materials");
+    if (g.offtopic) items.push("Stays on this lesson's topic");
+    if (g.flag) items.push("Messages about your safety may be shared with a school counselor");
+  } else {
+    items = c.guardrails;
+  }
+  $("s-guardrails").innerHTML = items.map(i => `<li>${i}</li>`).join("");
+
+  $("messages").innerHTML = "";
+  addMessage("bot", isBio()
+    ? `Hi! I'm your study assistant for Biology. Ask me about "${LESSON.title}" or anything else Ms. Rivera has shared.`
+    : `Hi! I'm your study assistant for ${c.name}. What are you working on?`);
+  $("chips").innerHTML = "";
+  (isBio() ? CHIPS : []).forEach(text => {
+    const b = document.createElement("button");
+    b.className = "chip"; b.type = "button"; b.textContent = text;
+    b.onclick = () => sendMessage(text);
+    $("chips").appendChild(b);
+  });
+}
+
+function addMessage(who, text) {
+  const div = document.createElement("div");
+  div.className = "msg " + who;
+  const label = document.createElement("span");
+  label.className = "who";
+  label.textContent = who === "bot" ? "Assistant" : "You";
+  div.appendChild(label);
+  div.appendChild(document.createTextNode(text));
+  $("messages").appendChild(div);
+  $("messages").scrollTop = $("messages").scrollHeight;
+}
+
+function detectIntent(text) {
+  const t = text.toLowerCase().trim();
+  if (state.modes.includes("practice") && /^[abc]\b/.test(t)) return "choice";
+  if (/(check my|my answer is|i think|i wrote|my draft|feedback on)/.test(t)) return "draft";
+  if (/(answer|just tell|give me)/.test(t)) return "answer";
+  if (/(quiz|practice|test me)/.test(t)) return "practice";
+  if (LESSON.keywords.some(k => t.includes(k))) return "other";
+  return state.guardrails.offtopic ? "offtopic" : "other";
+}
+
+function sendMessage(text) {
+  if (!text.trim()) return;
+  addMessage("me", text);
+  const typing = document.createElement("div");
+  typing.className = "typing"; typing.textContent = "Assistant is typing…";
+  $("messages").appendChild(typing);
+  $("messages").scrollTop = $("messages").scrollHeight;
+  setTimeout(() => {
+    typing.remove();
+    if (isBio()) {
+      const intent = detectIntent(text);
+      addMessage("bot", SCRIPTS[pickMode(intent)][intent]);
+    } else {
+      const c = CLASSES[state.activeClass];
+      addMessage("bot", `(Prototype placeholder) In the full version, I'd respond using ${c.teacher}'s ${c.name} materials, following ${c.teacher}'s settings.`);
+    }
+  }, 700);
+}
+
+function selectClass(key) {
+  state.activeClass = key;
+  renderStudent();
+}
+
+function renderSavedChats() {
+  $("saved-chats").innerHTML = "";
+  Object.entries(CLASSES).forEach(([key, c]) => {
+    const chats = SAVED_CHATS.filter(s => s.cls === key);
+    if (!chats.length) return;
+    const group = document.createElement("div");
+    group.className = "saved-group";
+    group.innerHTML = `<h3><span class="nav-dot" style="background:${c.color}" aria-hidden="true"></span>${c.name}</h3>`;
+    chats.forEach(s => {
+      const b = document.createElement("button");
+      b.className = "saved-item"; b.type = "button";
+      b.textContent = s.title;
+      const d = document.createElement("small"); d.textContent = s.date;
+      b.appendChild(d);
+      b.onclick = () => {
+        selectClass(key);
+        addMessage("bot", `(Prototype) Your saved chat "${s.title}" from ${s.date} would load here.`);
+      };
+      group.appendChild(b);
+    });
+    $("saved-chats").appendChild(group);
+  });
+}
+
+function renderSidebar() {
+  $("s-name").textContent = STUDENT_NAME;
+  $("nav-classes").innerHTML = "";
+  Object.entries(CLASSES).forEach(([key, c]) => {
+    const b = document.createElement("button");
+    b.className = "nav-item"; b.type = "button"; b.dataset.page = key;
+    b.innerHTML = `<span class="nav-dot" style="background:${c.color}" aria-hidden="true"></span>`;
+    b.appendChild(document.createTextNode(c.name));
+    b.onclick = () => showStudentPage(key);
+    $("nav-classes").appendChild(b);
+  });
+  $("nav-assistant").onclick = () => showStudentPage("assistant");
+}
+
+function showStudentPage(key) {
+  const isAssistant = key === "assistant";
+  $("page-assistant").hidden = !isAssistant;
+  $("page-class").hidden = isAssistant;
+  document.querySelectorAll("#view-student .nav-item").forEach(b => b.removeAttribute("aria-current"));
+  (isAssistant ? $("nav-assistant") : document.querySelector(`#view-student .nav-item[data-page="${key}"]`))
+    .setAttribute("aria-current", "page");
+  if (isAssistant) return;
+  const c = CLASSES[key];
+  $("c-title").textContent = c.name;
+  $("c-teacher").textContent = `${c.teacher} · ${c.course}`;
+  $("c-ask").textContent = `Ask the study assistant about ${c.name}`;
+  $("c-ask").onclick = () => { selectClass(key); showStudentPage("assistant"); };
+  // Reset the organizing tools for this class
+  studentView = { key, show: "all", unit: "all", type: "all", sort: "due", group: "unit" };
+  $("f-unit").innerHTML = `<option value="all">All units</option>` +
+    c.units.map(u => `<option></option>`).join("");
+  [...$("f-unit").options].slice(1).forEach((o, i) => { o.value = c.units[i]; o.textContent = c.units[i]; });
+  $("f-type").innerHTML = `<option value="all">All types</option>` + MATERIAL_TYPES.map(t => `<option>${t}</option>`).join("");
+  $("f-sort").value = "due"; $("f-group").value = "unit";
+  renderStudentMaterials(key);
+}
+
+/* ---------- Student class page: organize, filter and turn in ---------- */
+let openTurnIn = null;   // the material whose turn-in panel is open
+let studentView = { key: null, show: "all", unit: "all", type: "all", sort: "due", group: "unit" };
+
+const isDone = (m) => !!(m.submission || m.done);
+const statusOf = (m) => isDone(m) ? "done" : (m.due && m.due < todayISO() ? "overdue" : "todo");
+const STATUS_LABEL = { overdue: "Overdue", todo: "To do", done: "Completed" };
+
+function renderStudentMaterials(key) {
+  const c = CLASSES[key];
+  const v = studentView;
+  const all = c.materials;
+
+  // Counts across everything in the class
+  const n = { todo: 0, overdue: 0, done: 0 };
+  all.forEach(m => n[statusOf(m)]++);
+  $("c-counts").innerHTML = `<b>${n.todo + n.overdue}</b> to do · <b>${n.overdue}</b> overdue · <b>${n.done}</b> completed`;
+  document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.show === v.show));
+
+  // Filter
+  let items = all.filter(m =>
+    (v.show === "all" || (v.show === "todo" ? !isDone(m) : statusOf(m) === v.show)) &&
+    (v.unit === "all" || m.unit === v.unit) &&
+    (v.type === "all" || m.type === v.type));
+
+  // Sort (items with no due date go last when sorting by due date)
+  const far = "9999-12-31";
+  const sorters = {
+    "due": (a, b) => (a.due || far).localeCompare(b.due || far),
+    "due-desc": (a, b) => (b.due || "").localeCompare(a.due || ""),
+    "added": (a, b) => (b.added || "").localeCompare(a.added || ""),
+    "title": (a, b) => a.title.localeCompare(b.title)
+  };
+  items = [...items].sort(sorters[v.sort]);
+
+  // Group
+  let groups;
+  if (v.group === "none") groups = [["", items]];
+  else {
+    const order = v.group === "unit" ? [...c.units, "No unit"]
+                : v.group === "type" ? MATERIAL_TYPES
+                : ["overdue", "todo", "done"];
+    const keyOf = (m) => v.group === "unit" ? (m.unit || "No unit") : v.group === "type" ? m.type : statusOf(m);
+    groups = order.map(g => [v.group === "status" ? STATUS_LABEL[g] : g, items.filter(m => keyOf(m) === g)])
+                  .filter(([, list]) => list.length);
+  }
+
+  const list = $("c-materials");
+  list.innerHTML = "";
+  if (!items.length) {
+    list.innerHTML = `<p class="empty">Nothing matches these filters.</p>`;
+    return;
+  }
+  groups.forEach(([label, groupItems]) => {
+    if (label) {
+      const h = document.createElement("h3");
+      h.className = "group-head";
+      h.textContent = label;
+      const count = document.createElement("small"); count.textContent = `${groupItems.length}`;
+      h.appendChild(count);
+      list.appendChild(h);
+    }
+    groupItems.forEach(m => list.appendChild(studentMaterialCard(m, c, key)));
+  });
+}
+
+function studentMaterialCard(m, c, key) {
+  const card = document.createElement("div");
+  card.className = "mat-card s-mat";
+  card.innerHTML = `
+    <div class="doc-icon" style="background:${c.color}1a;color:${c.color}" aria-hidden="true">DOC</div>
+    <div class="s-mat-body">
+      <strong class="m-title"></strong>
+      <small class="m-meta"></small>
+      <p class="m-desc"></p>
+      ${m.chatbot ? "" : `<div class="tags"><span class="tag bot-off">Do this one without the study assistant</span></div>`}
+      <div class="turnin-area"></div>
+    </div>`;
+  card.querySelector(".m-title").textContent = m.title;
+  card.querySelector(".m-meta").textContent =
+    [m.unit, m.type, formatDue(m.due), m.graded ? "Graded" : null].filter(Boolean).join(" · ");
+  card.querySelector(".m-desc").textContent = m.desc || "";
+  if (m.source) {
+    const a = document.createElement("a");
+    a.className = "src-link"; a.href = m.source; a.target = "_blank"; a.rel = "noopener";
+    a.textContent = "Original activity: Biology Corner ↗";
+    card.querySelector(".m-desc").after(a);
+  }
+  const area = card.querySelector(".turnin-area");
+  if (SUBMITTABLE_TYPES.includes(m.type)) renderTurnIn(area, m, key);
+  else renderMarkDone(area, m, key);
+  return card;
+}
+
+/* Readings, quizzes and "Other" items: students can mark them done */
+function renderMarkDone(area, m, key) {
+  const st = statusOf(m);
+  area.innerHTML = `<div class="turnin-row">
+    <span class="status ${st === "done" ? "ok" : st === "overdue" ? "overdue" : "pending"}">${st === "done" ? "✓ Done" : STATUS_LABEL[st]}</span>
+    <button class="btn btn-ghost small" type="button">${m.done ? "Undo" : "Mark as done"}</button></div>`;
+  area.querySelector("button").onclick = () => { m.done = !m.done; renderStudentMaterials(key); };
+}
+
+function renderTurnIn(area, m, key) {
+  const rerender = () => renderStudentMaterials(key);
+  const s = m.submission;
+  if (s) {
+    // Already turned in
+    area.innerHTML = `
+      <div class="turned-in">
+        <span class="status ok">✓ Turned in ${s.date}</span>
+        <ul class="file-list"></ul>
+        <p class="s-note"></p>
+        <button class="btn btn-ghost small" type="button">Undo turn in</button>
+      </div>`;
+    s.files.forEach(f => {
+      const li = document.createElement("li"); li.textContent = "📎 " + f;
+      area.querySelector(".file-list").appendChild(li);
+    });
+    area.querySelector(".s-note").textContent = s.note ? `Note to teacher: ${s.note}` : "";
+    area.querySelector("button").onclick = () => { delete m.submission; rerender(); };
+    return;
+  }
+  if (openTurnIn !== m) {
+    const st = statusOf(m);
+    area.innerHTML = `<div class="turnin-row"><span class="status ${st === "overdue" ? "overdue" : "pending"}">${STATUS_LABEL[st]}</span>
+      <button class="btn btn-primary small" type="button">Add work &amp; turn in</button></div>`;
+    area.querySelector("button").onclick = () => { openTurnIn = m; m.draftFiles = []; rerender(); };
+    return;
+  }
+  // Turn-in panel
+  const id = "up-" + Math.random().toString(36).slice(2, 8);
+  area.innerHTML = `
+    <div class="turnin-panel">
+      <label class="field" for="${id}">Upload your work</label>
+      <input type="file" id="${id}" multiple>
+      <p class="hint-inline">For example: your essay, a photo of your cell diagram, or a worksheet.</p>
+      <ul class="file-list"></ul>
+      <label class="field" for="${id}-note">Note to your teacher (optional)</label>
+      <textarea id="${id}-note" rows="2"></textarea>
+      <div class="actions" style="margin-top:10px">
+        <button class="btn btn-primary small" type="button" data-act="submit">Turn in</button>
+        <button class="btn btn-ghost small" type="button" data-act="cancel">Cancel</button>
+      </div>
+    </div>`;
+  const fileList = area.querySelector(".file-list");
+  const showFiles = () => {
+    fileList.innerHTML = "";
+    m.draftFiles.forEach(f => { const li = document.createElement("li"); li.textContent = "📎 " + f; fileList.appendChild(li); });
+  };
+  area.querySelector('input[type="file"]').onchange = (e) => {
+    m.draftFiles.push(...[...e.target.files].map(f => f.name));
+    e.target.value = "";
+    showFiles();
+  };
+  area.querySelector('[data-act="submit"]').onclick = () => {
+    if (!m.draftFiles.length) { toast("Add at least one file first."); return; }
+    m.submission = {
+      files: m.draftFiles,
+      note: area.querySelector("textarea").value.trim(),
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    };
+    openTurnIn = null; delete m.draftFiles;
+    toast(`Turned in "${m.title}" (prototype: files aren't uploaded anywhere).`);
+    rerender();
+  };
+  area.querySelector('[data-act="cancel"]').onclick = () => { openTurnIn = null; delete m.draftFiles; rerender(); };
+}
+
+/* ---------- Teacher menu and class pages ---------- */
+function renderTeacherSidebar() {
+  $("t-name").textContent = TEACHER.name;
+  $("t-subject").textContent = TEACHER.subject;
+  $("t-nav-periods").innerHTML = "";
+  Object.entries(PERIODS).forEach(([key, p]) => {
+    const b = document.createElement("button");
+    b.className = "nav-item"; b.type = "button"; b.dataset.page = key;
+    b.innerHTML = `<span class="nav-dot" style="background:#2e7d4f" aria-hidden="true"></span>`;
+    b.appendChild(document.createTextNode(periodLabel(p)));
+    b.onclick = () => showTeacherPage(key);
+    $("t-nav-periods").appendChild(b);
+  });
+  $("t-nav-settings").onclick = () => showTeacherPage("settings");
+  $("mf-type").innerHTML = MATERIAL_TYPES.map(t => `<option>${t}</option>`).join("");
+}
+
+function showTeacherPage(key) {
+  const isSettings = key === "settings";
+  $("t-page-settings").hidden = !isSettings;
+  $("t-page-class").hidden = isSettings;
+  document.querySelectorAll("#view-teacher .nav-item").forEach(b => b.removeAttribute("aria-current"));
+  (isSettings ? $("t-nav-settings") : document.querySelector(`#view-teacher .nav-item[data-page="${key}"]`))
+    .setAttribute("aria-current", "page");
+  if (isSettings) { renderBotMaterials(); return; }
+  closeMaterialForm();
+  state.teacherPeriod = key;
+  const p = PERIODS[key];
+  $("tc-title").textContent = periodLabel(p);
+  $("tc-sub").textContent = `${p.students.length} students · ${TEACHER.name}`;
+  renderRoster(p); renderGrades(p); renderTeacherMaterials(p);
+  showSubtab("roster");
+}
+
+function showSubtab(name) {
+  document.querySelectorAll(".subtabs button").forEach(b =>
+    b.setAttribute("aria-selected", b.dataset.sub === name));
+  ["roster", "grades", "materials"].forEach(s => $("sub-" + s).hidden = s !== name);
+}
+
+function renderRoster(p) {
+  $("sub-roster").innerHTML = `
+    <table>
+      <thead><tr><th>Student</th><th>AI assistant access</th></tr></thead>
+      <tbody>${p.students.map(s => `
+        <tr><td>${s.name}</td>
+            <td>${s.consent
+              ? '<span class="status ok">Consent on file</span>'
+              : '<span class="status pending">Waiting on consent</span>'}</td></tr>`).join("")}
+      </tbody>
+    </table>`;
+}
+
+function renderGrades(p) {
+  const avg = (arr) => Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
+  $("sub-grades").innerHTML = `
+    <table>
+      <thead><tr><th>Student</th>${ASSIGNMENTS.map(a => `<th class="num">${a}</th>`).join("")}<th class="num">Average</th></tr></thead>
+      <tbody>${p.students.map(s => `
+        <tr><td>${s.name}</td>${s.scores.map(n => `<td class="num">${n}%</td>`).join("")}
+            <td class="num"><strong>${avg(s.scores)}%</strong></td></tr>`).join("")}
+      </tbody>
+    </table>`;
+}
+
+/* Units: chips with item counts for this period, plus the "Add unit" form */
+function renderUnits(p) {
+  $("unit-chips").innerHTML = "";
+  BIO_UNITS.forEach(u => {
+    const chip = document.createElement("span");
+    chip.className = "unit-chip";
+    chip.textContent = u;
+    const s = document.createElement("small");
+    const count = p.materials.filter(m => m.unit === u).length;
+    s.textContent = `${count} ${count === 1 ? "item" : "items"}`;
+    chip.appendChild(s);
+    $("unit-chips").appendChild(chip);
+  });
+}
+
+function renderTeacherMaterials(p) {
+  renderUnits(p);
+  $("tc-materials").innerHTML = "";
+  // Group by unit, in unit order, newest first inside each unit
+  const groups = [...BIO_UNITS, "No unit"]
+    .map(u => [u, p.materials.filter(m => (m.unit || "No unit") === u)
+                            .sort((a, b) => (b.added || "").localeCompare(a.added || ""))])
+    .filter(([, list]) => list.length);
+  groups.forEach(([unit, list]) => {
+    const h = document.createElement("h3");
+    h.className = "group-head";
+    h.textContent = unit;
+    const count = document.createElement("small"); count.textContent = `${list.length}`;
+    h.appendChild(count);
+    $("tc-materials").appendChild(h);
+    list.forEach(m => $("tc-materials").appendChild(teacherMaterialCard(m)));
+  });
+}
+
+function teacherMaterialCard(m) {
+    const card = document.createElement("div");
+    card.className = "mat-card";
+    card.innerHTML = `
+      <div class="doc-icon" aria-hidden="true">DOC</div>
+      <div>
+        <strong></strong><small>${formatAdded(m.added)}</small>
+        <p class="m-desc"></p>
+        <div class="tags">
+          <span class="tag tag-${m.type}">${m.type}</span>
+          <span class="tag due">${formatDue(m.due)}</span>
+          <span class="tag">${m.graded ? "Graded" : "Not graded"}</span>
+          <span class="tag ${m.chatbot ? "bot-on" : "bot-off"}">${m.chatbot ? "Study assistant can use" : "Hidden from study assistant"}</span>
+        </div>
+      </div>`;
+    card.querySelector("strong").textContent = m.title;
+    card.querySelector(".m-desc").textContent = m.desc || "No instructions yet.";
+    const edit = document.createElement("button");
+    edit.className = "btn btn-ghost edit-btn"; edit.type = "button"; edit.textContent = "Edit";
+    edit.setAttribute("aria-label", `Edit ${m.title}`);
+    edit.onclick = () => openMaterialForm(m);
+    card.appendChild(edit);
+    return card;
+}
+
+/* Upload / edit form. Pass a material to edit it; pass nothing to upload a new one. */
+let editingMaterial = null;
+function openMaterialForm(m) {
+  editingMaterial = m || null;
+  const isNew = !m;
+  $("mf-heading").textContent = isNew ? "Upload material" : `Edit "${m.title}"`;
+  $("mf-file-row").hidden = !isNew;
+  $("mf-periods-row").hidden = !isNew;
+  $("mf-file").value = "";
+  $("mf-title").value = isNew ? "" : m.title;
+  $("mf-unit").innerHTML = BIO_UNITS.map(u => `<option></option>`).join("") + `<option value="">No unit</option>`;
+  BIO_UNITS.forEach((u, i) => { $("mf-unit").options[i].value = u; $("mf-unit").options[i].textContent = u; });
+  $("mf-unit").value = isNew ? BIO_UNITS[BIO_UNITS.length - 1] : (m.unit || "");
+  $("mf-type").value = isNew ? "Classwork" : m.type;
+  $("mf-due").value = isNew ? "" : (m.due || "");
+  $("mf-nodue").checked = !isNew && !m.due;
+  $("mf-due").disabled = $("mf-nodue").checked;
+  document.querySelector(`input[name="mf-graded"][value="${!isNew && m.graded ? "yes" : "no"}"]`).checked = true;
+  $("mf-desc").value = isNew ? "" : (m.desc || "");
+  $("mf-chatbot").checked = isNew ? true : m.chatbot;
+  $("mf-periods").innerHTML = Object.entries(PERIODS).map(([key, p]) => `
+    <label class="inline"><input type="checkbox" value="${key}" ${key === state.teacherPeriod ? "checked" : ""}> ${periodLabel(p)}</label>`).join("");
+  $("mat-form").hidden = false;
+  $("mf-title").focus();
+}
+
+function closeMaterialForm() {
+  $("mat-form").hidden = true;
+  editingMaterial = null;
+}
+
+function saveMaterialForm() {
+  const title = $("mf-title").value.trim();
+  if (!title) { toast("Add a title first."); $("mf-title").focus(); return; }
+  if (!$("mf-nodue").checked && !$("mf-due").value) {
+    toast('Pick a due date, or check "No due date".'); $("mf-due").focus(); return;
+  }
+  const fields = {
+    title,
+    unit: $("mf-unit").value || null,
+    type: $("mf-type").value,
+    due: $("mf-nodue").checked ? null : ($("mf-due").value || null),
+    graded: document.querySelector('input[name="mf-graded"]:checked').value === "yes",
+    desc: $("mf-desc").value.trim(),
+    chatbot: $("mf-chatbot").checked
+  };
+  if (editingMaterial) {
+    Object.assign(editingMaterial, fields);
+    toast("Material updated.");
+  } else {
+    const keys = [...document.querySelectorAll("#mf-periods input:checked")].map(i => i.value);
+    if (!keys.length) { toast("Choose at least one period."); return; }
+    keys.forEach(k => PERIODS[k].materials.unshift({ ...fields, added: todayISO() }));
+    toast(`Posted to ${keys.map(k => PERIODS[k].name).join(", ")} (prototype: the file isn't read).`);
+  }
+  closeMaterialForm();
+  renderTeacherMaterials(PERIODS[state.teacherPeriod]);
+}
+
+function showView(name) {
+  const isTeacher = name === "teacher";
+  document.querySelector("main").classList.add("wide");
+  $("view-teacher").hidden = !isTeacher;
+  $("view-student").hidden = isTeacher;
+  $("tab-teacher").setAttribute("aria-selected", isTeacher);
+  $("tab-student").setAttribute("aria-selected", !isTeacher);
+}
+
+function toast(msg) {
+  $("toast").textContent = msg;
+  $("toast").classList.add("show");
+  setTimeout(() => $("toast").classList.remove("show"), 2200);
+}
+
+/* Events */
+$("tab-teacher").onclick = () => showView("teacher");
+$("tab-student").onclick = () => { readTeacherForm(); renderStudent(); showView("student"); };
+const noStyleChosen = () => !document.querySelector('input[name="mode"]:checked');
+$("save-btn").onclick = () => {
+  if (noStyleChosen()) { toast("Turn on at least one response style in section 2."); return; }
+  readTeacherForm(); renderStudent(); toast("Settings saved. The student view is updated.");
+};
+$("preview-btn").onclick = () => {
+  if (noStyleChosen()) { toast("Turn on at least one response style in section 2."); return; }
+  readTeacherForm(); renderStudent(); showView("student");
+};
+$("composer").onsubmit = (e) => {
+  e.preventDefault();
+  sendMessage($("chat-input").value);
+  $("chat-input").value = "";
+};
+
+$("class-picker").innerHTML = Object.entries(CLASSES)
+  .map(([key, c]) => `<option value="${key}">${c.name}</option>`).join("");
+$("class-picker").onchange = (e) => selectClass(e.target.value);
+
+document.querySelectorAll(".subtabs button").forEach(b => b.onclick = () => showSubtab(b.dataset.sub));
+$("t-upload-btn").onclick = () => openMaterialForm();
+$("unit-add").onsubmit = (e) => {
+  e.preventDefault();
+  const name = $("unit-name").value.trim();
+  if (!name) return;
+  if (BIO_UNITS.includes(name)) { toast("That unit already exists."); return; }
+  BIO_UNITS.push(name);
+  $("unit-name").value = "";
+  renderTeacherMaterials(PERIODS[state.teacherPeriod]);
+  toast(`Added "${name}". You can now pick it when uploading.`);
+};
+
+/* Student organizing toolbar */
+document.querySelectorAll(".seg button").forEach(b => b.onclick = () => {
+  studentView.show = b.dataset.show; renderStudentMaterials(studentView.key);
+});
+[["f-unit", "unit"], ["f-type", "type"], ["f-sort", "sort"], ["f-group", "group"]].forEach(([id, field]) => {
+  $(id).onchange = () => { studentView[field] = $(id).value; renderStudentMaterials(studentView.key); };
+});
+$("mf-cancel").onclick = closeMaterialForm;
+$("mf-nodue").onchange = () => { $("mf-due").disabled = $("mf-nodue").checked; };
+$("mf-save").onclick = saveMaterialForm;
+$("mf-file").onchange = (e) => {
+  const f = e.target.files[0];
+  if (f && !$("mf-title").value.trim()) $("mf-title").value = f.name.replace(/\.[^.]+$/, "");
+};
+
+renderTeacher();
+renderTeacherSidebar();
+showTeacherPage("settings");
+document.querySelector("main").classList.add("wide");
+renderStudent();
+renderSavedChats();
+renderSidebar();
+showStudentPage("assistant");
+</script>
+</body>
+</html>
