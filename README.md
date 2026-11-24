@@ -25,7 +25,7 @@ Safe Edu gives schools an AI study assistant that:
 
 ## Try it
 
-**Live demo:** https://laporsha-dees.github.io/Safe-Edu/
+**Live demo:** https://laporsha-dees.github.io/Safe-Edu/safe_edu_prototype.html
 
 **Run it locally:** download `safe_edu_prototype.html` and open it in any web browser. Nothing needs to be installed.
 
