@@ -10,7 +10,7 @@ Safe Edu is a capstone project from the **UN Women Young Feminist AI School**. T
 
 ## The problem
 
-When students use general-purpose AI without guidance, they can skip the reading, writing and problem-solving that build those skills. They also get answers drawn from the open internet rather than from what their class is actually studying.
+When students use general-purpose AI without guidance, they can skip the reading, writing, and problem-solving that build those skills. They also get answers drawn from the open internet rather than from what their class is actually studying.
 
 ## The idea
 
@@ -25,16 +25,16 @@ Safe Edu gives schools an AI study assistant that:
 
 ## Try it
 
-**Live demo:** _add your GitHub Pages link here_
+**Live demo:** https://laporsha-dees.github.io/Safe-Edu/
 
-**Run it locally:** download `index.html` and open it in any web browser. Nothing needs to be installed.
+**Run it locally:** download `safe_edu_prototype.html` and open it in any web browser. Nothing needs to be installed.
 
 Use the **Teacher / Student** switch at the top right to move between the two views.
 
 ### Suggested demo walkthrough
 
 1. **Teacher → Chatbot settings.** Open *2. How should the assistant respond?* to see the response styles, the private instructions for the assistant, and the official description students will see.
-2. **Teacher → Biology · Period 2 → Materials.** See the units. Click **Upload material** to post an assignment with a unit, type, due date, graded setting and study-assistant access.
+2. **Teacher → Biology · Period 2 → Materials.** See the units. Click **Upload material** to post an assignment with a unit, type, due date, graded setting, and study-assistant access.
 3. **Student → Biology.** Filter and group classwork by status, unit or type, and turn in an assignment with files.
 4. **Student → Study assistant.** Click *"What's the answer to #3?"* The assistant responds with a hint that points back to the reading instead of giving the answer.
 5. **Back in Teacher → Chatbot settings,** change the response styles, click **Preview as student**, and ask again.
@@ -92,7 +92,7 @@ Use the **Teacher / Student** switch at the top right to move between the two vi
 
 ## Customizing the demo
 
-Everything is in one file, `index.html`. The editable content is in clearly labeled blocks at the top of the `<script>` section:
+Everything is in one file, `safe_edu_prototype.html`. The editable content is in clearly labeled blocks at the top of the `<script>` section:
 
 | Block | What it controls |
 |---|---|
